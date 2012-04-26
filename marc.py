@@ -307,20 +307,20 @@ def process_file(f, lim=2000000):
 
 
 files = [
-    '../data/HLOM/ab.bib.00.20120331.full.mrc',
-    '../data/HLOM/ab.bib.01.20120331.full.mrc',
-    '../data/HLOM/ab.bib.02.20120331.full.mrc',
-    '../data/HLOM/ab.bib.03.20120331.full.mrc',
-    '../data/HLOM/ab.bib.04.20120331.full.mrc',
-    '../data/HLOM/ab.bib.05.20120331.full.mrc',
-    '../data/HLOM/ab.bib.06.20120331.full.mrc',
-    '../data/HLOM/ab.bib.07.20120331.full.mrc',
-    '../data/HLOM/ab.bib.08.20120331.full.mrc',
-    '../data/HLOM/ab.bib.09.20120331.full.mrc',
-    '../data/HLOM/ab.bib.10.20120331.full.mrc',
-    '../data/HLOM/ab.bib.11.20120331.full.mrc',
-    '../data/HLOM/ab.bib.12.20120331.full.mrc',
-    '../data/HLOM/ab.bib.13.20120331.full.mrc',
+    'data/HLOM/ab.bib.00.20120331.full.mrc',
+    'data/HLOM/ab.bib.01.20120331.full.mrc',
+    'data/HLOM/ab.bib.02.20120331.full.mrc',
+    'data/HLOM/ab.bib.03.20120331.full.mrc',
+    'data/HLOM/ab.bib.04.20120331.full.mrc',
+    'data/HLOM/ab.bib.05.20120331.full.mrc',
+    'data/HLOM/ab.bib.06.20120331.full.mrc',
+    'data/HLOM/ab.bib.07.20120331.full.mrc',
+    'data/HLOM/ab.bib.08.20120331.full.mrc',
+    'data/HLOM/ab.bib.09.20120331.full.mrc',
+    'data/HLOM/ab.bib.10.20120331.full.mrc',
+    'data/HLOM/ab.bib.11.20120331.full.mrc',
+    'data/HLOM/ab.bib.12.20120331.full.mrc',
+    'data/HLOM/ab.bib.13.20120331.full.mrc',
 ]
 
 if __name__ == '__main__':
