@@ -72,8 +72,8 @@ def parse008(s):
 
 def parse008_music(code):
     global music_forms, music_score
-
     ret = {}
+    if len(code) < 21: return
     if music_forms.get(code[18:20]):
         ret['music_form'] = music_forms[code[18:20]]
     if music_score.get(code[20]):
