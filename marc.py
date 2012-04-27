@@ -4,6 +4,7 @@ from marc_data import *
 import re
 import sys
 import json
+import cgi
 from collections import defaultdict
 
 def listify(x):
@@ -73,7 +74,7 @@ def parse008(s):
 def parse008_music(code):
     global music_forms, music_score
     ret = {}
-    if len(code) < 21: return
+    if len(code) < 21: return ret
     if music_forms.get(code[18:20]):
         ret['music_form'] = music_forms[code[18:20]]
     if music_score.get(code[20]):
@@ -104,20 +105,23 @@ def parse008_music(code):
 def guess_type(r):
     global video_techniques
     ret = {'type': 'unknown'}
+    r008 = r.get('r008', '')
+    if len(r008) < 36:
+        return ret
 
     physical_desc = str(r.get('physical_desc', ''))
     physical_desc_2 = str(r.get('physical_desc_2', ''))
 
     # definitive and mostly complete.
     # todo: "online reasources"
-    if r['r008'][29:34] == '    v' or re.search(r'video', physical_desc):
+    if r008[29:34] == '    v' or re.search(r'video', physical_desc):
         ret['type'] = 'video'
         if video_techniques.get(r['r008'][35]):
-            ret['video_technique'] = video_techniques.get(r['r008'][35])
+            ret['video_technique'] = video_techniques.get(r008[35])
 
     # definitive, but not complete.
     # todo: topo info
-    if r['r008'][25:29] == 'a   s':
+    if r008[25:29] == 'a   s':
         ret['type'] = 'map'
 
     if physical_desc.find('sound disc') > -1:
@@ -161,7 +165,7 @@ def guess_type(r):
     # very good chance it's music.
     if r.get('lang') == 'No linguistic content' or re.search(r'(?:sound|audio) disc', physical_desc):
         ret['type'] = 'music'
-        ret.update(parse008_music(r['r008']))
+        ret.update(parse008_music(r008))
         #print >> sys.stderr, ret
 
 
@@ -265,8 +269,8 @@ fieldmap = {
     '856d': 'url_path',
 }
 
-field_counts = defaultdict((lambda: 0))
 fields = sorted(fieldmap.values() + [
+    'docid',
     'pub_date',
     'country',
     'lang',
@@ -279,6 +283,7 @@ fields = sorted(fieldmap.values() + [
 
 
 def process_file(f, lim=2000000):
+    print >> sys.stderr, f
     data = MARC21File(f)
     for i in range(lim):
         if i and i % 1000 == 0:
@@ -287,10 +292,7 @@ def process_file(f, lim=2000000):
         if not m: return
         marc = marc2dict(m)
 
-        for k in marc:
-            field_counts[k] +=1
-
-        if '008' not in marc:
+        if not marc.get('008'):
             print >> sys.stderr, '008 record not found', marc
             continue
 
@@ -301,6 +303,11 @@ def process_file(f, lim=2000000):
                 record[v] = marc[k]
 
         record.update(guess_type(record))
+
+        # many systems (eg Sphinx) require a numeric uniq id.
+        # the first nine characters of this field will serve.
+        record['docid'] = record.get('id', '')[0:9]
+
         yield record
 
 
@@ -325,6 +332,13 @@ files = [
 
 if __name__ == '__main__':
 
+    if sys.argv[1] not in ('sql', 'json', 'xmlpipe2', 'html'):
+        print >> sys.stderr, """
+usage:
+    marc.py [sql|json|xmlpipe2|html]
+"""
+        sys.exit(1)
+
     if sys.argv[1] == 'sql':
         print 'drop table harvard;'
         print 'create table harvard ('
@@ -341,3 +355,71 @@ if __name__ == '__main__':
         for f in files:
             for record in process_file(f):
                 print json.dumps(record) + '\n'
+
+
+    # Sphinx indexer input format
+    elif sys.argv[1] == 'xmlpipe2':
+        print """<?xml version="1.0" encoding="utf-8"?>
+<sphinx:docset>
+<sphinx:schema>
+<sphinx:field name="title"/>
+<sphinx:field name="date"/>
+<sphinx:field name="author"/>
+<sphinx:field name="type"/>
+<sphinx:field name="publisher"/>
+<sphinx:field name="country"/>
+<sphinx:field name="lang"/>
+<sphinx:field name="isbn"/>
+<sphinx:field name="misc"/>
+</sphinx:schema>
+"""
+        for f in files:
+            for record in process_file(f, 50000):
+                r = {
+                    'docid': '',
+                    'title': '',
+                    'pub_date': '',
+                    'subtitle': '',
+                    'alt_title': '',
+                    'title_abbr': '',
+                    'type': '',
+                    'author': '',
+                    'author2': '',
+                    'publisher': '',
+                    'corporate_name': '',
+                    'country': '',
+                    'lang': '',
+                    'isbn': '',
+                    'invalid_isbn': '',
+                    'physical_desc': '',
+                    'physical_desc_2': '',
+                    'topical_terms': '',
+                    'topical_terms_2': '',
+                    'genre': '',
+                    'general_note': '',
+                    'series': '',
+                    'series2': '',
+                    'subject_personal_name': ''
+                }
+                r.update(record)
+
+                for k, v in r.iteritems():
+                    if type(v) == type([]):
+                        r[k] = ' '.join(v)
+                    r[k] = cgi.escape(str(r[k]))
+
+                print """
+<sphinx:document id="{docid}">
+<title>{title} {subtitle} {alt_title} {title_abbr}</title>
+<type>{type}</type>
+<date>{pub_date}</date>
+<author>{author} {author2}</author>
+<publisher>{publisher} {corporate_name}</publisher>
+<country>{country}</country>
+<lang>{lang}</lang>
+<isbn>{isbn} {invalid_isbn}</isbn>
+<misc>{physical_desc} {physical_desc_2} {topical_terms} {topical_terms_2} {genre} {general_note} {series} {series2} {subject_personal_name}</misc>
+</sphinx:document>
+""".format(**r)
+
+        print """</sphinx:docset>"""
