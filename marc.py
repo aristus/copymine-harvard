@@ -6,6 +6,7 @@ import sys
 import json
 import cgi
 from collections import defaultdict
+import glob
 
 def listify(x):
     if type(x) == type([]):
@@ -311,33 +312,19 @@ def process_file(f, lim=2000000):
         yield record
 
 
-
-
-files = [
-    'data/HLOM/ab.bib.00.20120331.full.mrc',
-    'data/HLOM/ab.bib.01.20120331.full.mrc',
-    'data/HLOM/ab.bib.02.20120331.full.mrc',
-    'data/HLOM/ab.bib.03.20120331.full.mrc',
-    'data/HLOM/ab.bib.04.20120331.full.mrc',
-    'data/HLOM/ab.bib.05.20120331.full.mrc',
-    'data/HLOM/ab.bib.06.20120331.full.mrc',
-    'data/HLOM/ab.bib.07.20120331.full.mrc',
-    'data/HLOM/ab.bib.08.20120331.full.mrc',
-    'data/HLOM/ab.bib.09.20120331.full.mrc',
-    'data/HLOM/ab.bib.10.20120331.full.mrc',
-    'data/HLOM/ab.bib.11.20120331.full.mrc',
-    'data/HLOM/ab.bib.12.20120331.full.mrc',
-    'data/HLOM/ab.bib.13.20120331.full.mrc',
-]
-
 if __name__ == '__main__':
 
-    if sys.argv[1] not in ('sql', 'json', 'xmlpipe2', 'html'):
+    if len(sys.argv) < 2 or sys.argv[1] not in ('sql', 'json', 'xmlpipe2', 'html'):
         print >> sys.stderr, """
 usage:
-    marc.py [sql|json|xmlpipe2|html]
+    marc.py sql|json|xmlpipe2|html [input]
 """
         sys.exit(1)
+
+    if len(sys.argv) >= 3:
+        files = [sys.argv[2]]
+    else:
+        files = glob.glob('data/hlom/*.mrc')
 
     if sys.argv[1] == 'sql':
         print 'drop table harvard;'
