@@ -343,6 +343,10 @@ usage:
             for record in process_file(f):
                 print json.dumps(record) + '\n'
 
+    elif sys.argv[1] == 'tsv':
+        for f in files:
+            for record in process_file(f):
+                print "\t".join([str(record.get(k, '')) for k in fields])
 
     # Sphinx indexer input format
     elif sys.argv[1] == 'xmlpipe2':
